@@ -1,0 +1,14 @@
+# Jupyter checkpoint folders (created automatically, not needed in repo)
+.ipynb_checkpoints/
+
+# Large data files (too big for GitHub)
+
+# Secret credentials
+
+# All CSV files in results folder
+results/*.csv
+
+# Python cache files (created automatically)
+__pycache__/
+*.pyc
+
