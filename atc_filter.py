@@ -43,9 +43,8 @@ class ATCFilter:
         print(f"Using ATC column: '{atc_column}'")
 
      
-    def filter_main_group(self): 
-            
-    """ Filter drugs by their Anatomical Main Group (first letter of ATC code). """
+    def filter_main_group(self):
+        """ Filter drugs by their Anatomical Main Group (first letter of ATC code). """
 
         groups = {}  # Dictionary to store a list for each letter
         
@@ -65,7 +64,7 @@ class ATCFilter:
 
     def filter_therapeutic_subgroup(self):
 
-    """ Filter drugs by their Therapeutic Subgroup (second and third characters of ATC code). """
+        """ Filter drugs by their Therapeutic Subgroup (second and third characters of ATC code). """
        
        
         groups = {} 
@@ -86,7 +85,7 @@ class ATCFilter:
         
     def filter_pharmacological_subgroup(self):
 
-    """ Filter drugs by their Pharmacological Subgroup (fourth character of ATC code). """
+        """ Filter drugs by their Pharmacological Subgroup (fourth character of ATC code). """
 
         groups = {} 
 
@@ -107,7 +106,7 @@ class ATCFilter:
 
     def filter_chemical_subgroup(self):
 
-    """ Filter drugs by their Chemical Subgroup (fifth character of ATC code). """
+        """ Filter drugs by their Chemical Subgroup (fifth character of ATC code). """
         
         groups = {} 
 
@@ -147,17 +146,16 @@ class ATCFilter:
 # Make a quick user interface where a user can give a dataframe, what they want to filter the ATC codes by, and then it returns a dataframe of the filtered ATC codes with their drug bank names
 
 def load_dataframe_from_csv():
+    """Load a dataframe from a CSV file given by the user."""
 
- """Load a dataframe from a CSV file given by the user."""
-
-    path = input("Enter CSV file path: ").strip()
+    path = input("Enter CSV file path: ").strip().strip('"').strip("'")
     if not path:
         raise ValueError("CSV path cannot be empty.")
     return pd.read_csv(path), path
 
 def get_atc_column(df):
 
-"""Get the ATC column name from the user."""
+    """Get the ATC column name from the user."""
 
     col = input("Enter the ATC column name: ").strip()
     if col not in df.columns:
@@ -166,7 +164,7 @@ def get_atc_column(df):
 
 def get_level():
 
-"""Get the ATC hierarchy level from the user."""
+    """Get the ATC hierarchy level from the user."""
 
     print("\nChoose ATC hierarchy level:")
     print("1 = Level 1 (1 letter)  e.g., A")
@@ -180,7 +178,7 @@ def get_level():
 
 def build_prefix(level):
 
-"""Build the ATC code prefix based on the selected level."""
+    """Build the ATC code prefix based on the selected level."""
 
     if level == 1:
         return input("Enter Level 1 code (1 letter, e.g., A): ").strip().upper()
@@ -195,7 +193,7 @@ def build_prefix(level):
 
 def main():
 
-"""Main function to run the ATC code filter."""
+    """Main function to run the ATC code filter."""
 
     print('Welcome to the ATC_Code_Filter :)')
     df, src_path = load_dataframe_from_csv()
@@ -216,7 +214,7 @@ def main():
 
 if __name__ == "__main__":
 
-"""Run the ATC code filter."""
+    """Run the ATC code filter."""
 
     main()
 
