@@ -4,11 +4,23 @@ Predicting drug-drug interactions using heterogeneous network embeddings and ens
 ### Project Structure
 ```
 ddi-prediction/
-|-- notebooks/  # Jupyter notebooks for analysis
-|-- src/        # Core Python modules for imports
-|-- data/       # Data files
-|-- tests/      # Small test jobs
-|-- docs/       # Documentation
+|-- notebooks/      # Jupyter notebooks for analysis
+|-- notebooks_test/ # In-development, Jupyter notebooks for analysis
+|-- src_test/       # In-development, Reusable Python modules 
+|-- src/            # Core Reusable Python modules for imports
+|-- scripts/        # Standalone scripts
+|-- data/           # Data files
+    |-- raw/        # Original data (gitignored)
+    |-- processed/  # Cleaned data (gitignored)
+    |-- README.md   # Data documentation
+|-- models/         # Saved models (gitignored)
+    |-- README.md   # Model documentation
+|-- results/        # Outputs (gitignored)
+
+|-- README.md
+|-- rquirements-colab.txt
+|-- environment.yml 
+|--.gitignore
 ```
 
 ## Setup

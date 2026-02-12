@@ -73,7 +73,7 @@ class Drug:
     drug_type: str = None
     atc_code: dict = None
 
-xml_path = r"C:\Users\ashto\OneDrive - Eastern Connecticut State University\Project 5. Data\raw\drugbank_all_full_database_V5.1.14.xml.zip" # MUST CHANGE PATH DEPENDING ON WHERE ACCESSING XML ZIP FILE
+#xml_path = r"C:\Users\ashto\OneDrive - Eastern Connecticut State University\Project 5. Data\raw\drugbank_all_full_database_V5.1.14.xml.zip" # MUST CHANGE PATH DEPENDING ON WHERE ACCESSING XML ZIP FILE
 # Maybe make an user interface to be able to input own xml file, and how many drugs it wants to extract
 
     
