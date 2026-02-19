@@ -1,8 +1,7 @@
 # Jupyter checkpoint folders (created automatically, not needed in repo)
-**/.ipynb_checkpoints/ #It will ignore all .ipynb_checkpoints folders in the repository
+.ipynb_checkpoints/
 
 # Large data files (too big for GitHub)
-data/raw/drugbank_all_full_database_V5.1.14.xml.zip
 
 # Secret credentials
 
