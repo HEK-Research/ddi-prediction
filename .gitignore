@@ -14,3 +14,5 @@ results/*.csv
 __pycache__/
 *.pyc
 
+# Not tracked
+ddi_prediction.egg-info/
