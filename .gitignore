@@ -3,6 +3,7 @@
 
 # Large data files (too big for GitHub)
 data/raw/drugbank_all_full_database_V5.1.14.xml.zip
+data/sample/*.csv
 
 # Secret credentials
 
