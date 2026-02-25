@@ -1,0 +1,18 @@
+# Sequence data - too large and not needed for DDI
+amino-acid-sequence
+gene-sequence
+
+# Detailed protein annotations - redundant for DDI
+go-classifiers
+pfams
+synonyms
+references
+signal-regions
+transmembrane-regions
+theoretical-pi
+chromosome-location
+locus
+cellular-location
+molecular-weight
+general-function
+specific-function 

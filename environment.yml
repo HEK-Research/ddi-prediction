@@ -6,6 +6,9 @@ dependencies:
   # Python version  
   - python=3.11
 
+  # File handling
+  - pyarrow=23.0.1
+
   # Core scientific computing 
   - numpy=1.26.4
   - pandas>=2.2.0
@@ -26,6 +29,7 @@ dependencies:
 
   # Visualization
   - matplotlib=3.8.0
+  - matplotlib-venn=1.1.2
   - seaborn=0.12.2
 
   # Jupyter Ecosystem (removed to avoid platform-specific resolution errors).
