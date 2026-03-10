@@ -49,3 +49,6 @@ dependencies:
   - pip:
       - gensim==4.4.0
       - node2vec==0.5.0
+      - beautifulsoup4==4.14.3
+      - lxml==6.0.2
+
