@@ -61,7 +61,7 @@ class FastDrugBankParser:
         """
         # If no required fields specified, set defaults (all important fields)
         if required_fields is None:
-            required_fields = ['drugbank_id', 'name', 'smiles', 'groups', 'drug_type', 'atc_codes']
+            required_fields = ['drugbank_id', 'name', 'smiles', 'groups', 'drug_type', 'atc_codes', 'interactions']
         
         # Dictionary to store all parsed drugs (key=drugbank_id, value=drug_data)
         drugs = {}
@@ -200,6 +200,9 @@ class FastDrugBankParser:
         drug_data['drug_type'] = drug_element.get('type')
         # Extract ATC code information (special parsing for nested structure)
         drug_data['atc_codes'] = self._get_atc_code(drug_element)
+        # Extract drug interactions (drugbank_id, name, description for each)
+        drug_data['interactions'] = self._get_drug_interactions(drug_element)
+        drug_data['n_interactions'] = len(drug_data['interactions']) if drug_data['interactions'] else 0
         
         # Return the complete drug data dictionary
         return drug_data
@@ -261,6 +264,27 @@ class FastDrugBankParser:
         # Return the list of ATC codes, or None if empty
         return atc_codes if atc_codes else None
 
+    # Helper method: extract drug interactions as a list of dicts
+    def _get_drug_interactions(self, element) -> Optional[List[Dict]]:
+        """Extract all drug-drug interactions with their descriptions"""
+        interactions_elem = element.find(f"{self.ns}drug-interactions")
+        if interactions_elem is None:
+            return None
+        
+        interactions = []
+        for interaction in interactions_elem.findall(f"{self.ns}drug-interaction"):
+            db_id = interaction.findtext(f"{self.ns}drugbank-id")
+            name = interaction.findtext(f"{self.ns}name")
+            description = interaction.findtext(f"{self.ns}description")
+            if db_id:
+                interactions.append({
+                    'drugbank_id': db_id.strip(),
+                    'name': name.strip() if name else None,
+                    'description': description.strip() if description else None,
+                })
+        
+        return interactions if interactions else None
+
 
 
 # Example usage / main execution block
@@ -274,12 +298,12 @@ if __name__ == "__main__":
     # Create an instance of the fast parser with the xml file path
     parser = FastDrugBankParser(xml_path)
     # Parse drugs from the XML file (limit to 100 drugs for this example)
-    drugs = parser.parse_drugs_from_xml(limit = 100)
+    drugs = parser.parse_drugs_from_xml(limit = None)
 
     df = pd.DataFrame.from_dict(drugs, orient='index')  # Convert the drugs dictionary to a DataFrame
 
     try: 
-        df.to_csv(r"C:\Users\ashto\OneDrive\DDI codes\DrugBank Parsing Code\drugbank_parsed.csv", index=False)
+        df.to_csv(r"C:\Users\ashto\ddi-prediction\data\sample/drugbank_parsed_with_interactions.csv", index=False)
     except Exception as e:
         print(f"Error saving to CSV: {e}")
 
@@ -306,5 +330,7 @@ if __name__ == "__main__":
         # Print the drug's groups (therapeutic categories)
         print(f"Groups: {drug.get('groups')}")
         # Print the drug's ATC code information (includes code and hierarchy levels)
-        print(f'ATC: {drug.get("atc_code")}')"""
-
+        print(f'ATC: {drug.get("atc_code")}')
+        # Print the drug's interactions
+        print(f'Interactions: {drug.get("interactions")}')
+        print(f'Number of Interactions: {drug.get("n_interactions")}')"""
