@@ -51,4 +51,4 @@ dependencies:
       - node2vec==0.5.0
       - beautifulsoup4==4.14.3
       - lxml==6.0.2
-
+      - chembl-webresource-client==0.10.9

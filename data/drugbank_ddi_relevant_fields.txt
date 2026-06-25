@@ -8,8 +8,6 @@ monoisotopic-mass
 groups
 
 # Pharmacological classification 
-#classification 
-#categories
 atc-codes
 
 # Network edges
