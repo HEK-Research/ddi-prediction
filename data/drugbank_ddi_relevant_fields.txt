@@ -1,0 +1,36 @@
+# Identity:
+drugbank-id
+name
+cas-number
+unii
+average-mass
+monoisotopic-mass
+groups
+
+# Pharmacological classification 
+atc-codes
+
+# Network edges
+drug-interactions 
+calculated-properties
+experimental-properties
+external-identifiers
+#pathways
+reactions
+targets
+#enzymes
+#transporters
+#carriers
+
+# Pharmacology
+#indication
+#mechanism-of-action
+#pharmacodynamics
+#metabolism
+#absorption
+#half-life
+#protein-binding
+#route-of-elimination
+#volume-of-distribution
+#clearance
+#toxicity

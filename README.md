@@ -1,6 +1,17 @@
 # DDI Prediction Project
 Predicting drug-drug interactions using heterogeneous network embeddings and ensemble learning.
 
+## Development-Branch (Stage I, Chemical Similarities)
+Main task: 
+1. Gather all drugbank compounds that met the filtering standard 
+2. Using random sampling, create 10 (n=100) subsets for method testing
+3. Develop chem_similarities.py, that process each drug and calculate pair-wise similarity scores
+4. Develop chem_network.py, that reads the similarity matrix and construct network
+5. Develop chem_embedding.py, that applies node2vec algorithm to extract drug's embedding representation
+6. Develop chem_rf_model.py, that use network embedding as input features to train a binary predictive model 
+
+
+
 ### Project Structure
 ```
 ddi-prediction/

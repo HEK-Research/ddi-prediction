@@ -3,7 +3,10 @@
 
 # Large data files (too big for GitHub)
 data/raw/drugbank_all_full_database_V5.1.14.xml.zip
-
+data/sample/*.csv
+data/raw/*.csv
+data/sample/*.parquet
+data/atc_code_output/rds_cache/
 # Secret credentials
 
 # All CSV files in results folder
@@ -13,3 +16,5 @@ results/*.csv
 __pycache__/
 *.pyc
 
+# Not tracked
+ddi_prediction.egg-info/data/raw/

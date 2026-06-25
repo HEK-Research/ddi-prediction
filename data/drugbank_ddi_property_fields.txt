@@ -1,0 +1,9 @@
+# Only keep these calculated/experimental property kinds
+InChIKey
+SMILES
+#Molecular Formula
+#Molecular Weight
+#logP
+#logS
+#Water Solubility
+#Polar Surface Area
