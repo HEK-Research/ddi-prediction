@@ -423,9 +423,198 @@ def get_targets_from_chembl_batch(
  
  
 # ─────────────────────────────────────────────────────────────
+# Comprehensive per-drug biological profile extractor (T / E / R / C + native pathways)
+# ─────────────────────────────────────────────────────────────
+
+# GO-classifier <category> values map to the standard three-letter ontology aspect.
+_GO_CATEGORY_TO_ASPECT = {
+    "function": "mf",     # molecular function
+    "process": "bp",      # biological process
+    "component": "cc",    # cellular component
+}
+
+
+def parse_drugbank_biological_profiles(xml_path, wanted_ids=None):
+    """
+    Single stream-parse of the DrugBank XML that extracts, per drug, everything
+    needed to build the T/E/R/C protein-role ladder (L0=T, L1=T|E|R, L2=L1|C) and
+    the native pathway profile, without re-parsing the (>1GB) file multiple times.
+
+    <targets>, <enzymes>, <transporters>, and <carriers> are siblings of each
+    other under <drug> and share an identical <target|enzyme|transporter|carrier>
+    -> <polypeptide id="UNIPROT_ID" source="..."> sub-schema. Only the polypeptide's
+    OWN role block is used to attribute its UniProt ID (unlike
+    PathwayMapper._parse_drugbank_xml, which does not scope <polypeptide> to its
+    parent block at all).
+
+    <pathways>/<pathway> also nests its own <enzymes><uniprot-id> list -- the
+    pathway's protein membership, NOT the drug's metabolizing enzymes. This is
+    disambiguated from the drug-level <enzymes> block via the in_pathways_block flag.
+
+    GO terms and Pfam domains are read directly from each target polypeptide's own
+    <go-classifiers>/<pfams> blocks (already split into function/process/component
+    aspects by DrugBank itself), so no extra live UniProt calls are needed for T(d).
+
+    Args:
+        xml_path:   path to the DrugBank XML / .xml.gz / .zip file.
+        wanted_ids: optional iterable of drugbank_id strings to restrict output to
+                    (the file is still scanned start-to-end regardless, since
+                    iterparse can't skip ahead, but memory stays bounded to just
+                    the drugs of interest).
+
+    Returns:
+        dict {drugbank_id: {
+            "chembl_id": str | None,
+            "target_uniprot_ids": sorted list,
+            "target_fasta_sequences": sorted list,
+            "target_pfam_domains": sorted list,
+            "target_go_mf": sorted list, "target_go_bp": sorted list, "target_go_cc": sorted list,
+            "enzyme_uniprot_ids": sorted list,
+            "transporter_uniprot_ids": sorted list,
+            "carrier_uniprot_ids": sorted list,
+            "native_pathway_ids": sorted list,
+        }}
+    """
+    wanted = set(wanted_ids) if wanted_ids is not None else None
+    results = {}
+
+    ROLE_TAGS = {
+        f"{NS}targets": "targets",
+        f"{NS}enzymes": "enzymes",
+        f"{NS}transporters": "transporters",
+        f"{NS}carriers": "carriers",
+    }
+
+    def _open(path):
+        if path.endswith(".zip"):
+            zf = zipfile.ZipFile(path, "r")
+            xml_name = next(f for f in zf.namelist() if f.lower().endswith(".xml"))
+            return zf.open(xml_name)
+        if path.endswith(".gz"):
+            return gzip.open(path, "rb")
+        return open(path, "rb")
+
+    with _open(xml_path) as f:
+        context = iter(ET.iterparse(f, events=("start", "end")))
+        _, root = next(context)
+
+        current_id = None
+        current_role = None          # None | "targets" | "enzymes" | "transporters" | "carriers"
+        in_pathways_block = False    # True between <pathways> start/end (disambiguates <pathway><enzymes>)
+        in_polypeptide = False
+        current_pid = None           # UniProt id of the <polypeptide> currently open
+        drug_depth = 0                # <pathway><drugs><drug> nests a second, unrelated <drug> tag
+
+        profile = None                # accumulator dict for the drug currently being parsed
+
+        for event, elem in context:
+            tag = elem.tag
+
+            if event == "start" and tag == f"{NS}drug":
+                drug_depth += 1
+                if drug_depth == 1:
+                    profile = {
+                        "chembl_id": None,
+                        "target_uniprot_ids": set(), "target_fasta_sequences": set(),
+                        "target_pfam_domains": set(),
+                        "target_go_mf": set(), "target_go_bp": set(), "target_go_cc": set(),
+                        "enzyme_uniprot_ids": set(), "transporter_uniprot_ids": set(),
+                        "carrier_uniprot_ids": set(), "native_pathway_ids": set(),
+                    }
+                    current_id = None
+
+            elif event == "end" and tag == f"{NS}drugbank-id" and profile is not None and current_id is None:
+                # The FIRST <drugbank-id> child of <drug> is the primary ID (subsequent
+                # ones are secondary/aliased IDs) -- only capture it once per drug.
+                if elem.text:
+                    current_id = elem.text.strip()
+
+            elif event == "start" and tag == f"{NS}pathways":
+                in_pathways_block = True
+
+            elif event == "end" and tag == f"{NS}pathways":
+                in_pathways_block = False
+
+            elif event == "end" and tag == f"{NS}smpdb-id" and in_pathways_block and profile is not None:
+                if elem.text:
+                    profile["native_pathway_ids"].add(elem.text.strip())
+
+            elif event == "start" and tag in ROLE_TAGS and not in_pathways_block:
+                current_role = ROLE_TAGS[tag]
+
+            elif event == "end" and tag in ROLE_TAGS and not in_pathways_block:
+                current_role = None
+
+            elif (event == "end" and tag == f"{NS}external-identifier"
+                  and current_role is None and not in_polypeptide and profile is not None):
+                # Drug-level external-identifiers block (before <pathways>/<targets>) --
+                # only place a ChEMBL cross-reference appears in this schema.
+                resource = elem.find(f"{NS}resource")
+                identifier = elem.find(f"{NS}identifier")
+                if (resource is not None and resource.text == "ChEMBL"
+                        and identifier is not None and identifier.text):
+                    profile["chembl_id"] = identifier.text.strip()
+                elem.clear()
+
+            elif event == "start" and tag == f"{NS}polypeptide":
+                in_polypeptide = True
+                current_pid = (elem.get("id") or "").strip() or None
+
+            elif event == "end" and tag == f"{NS}polypeptide":
+                in_polypeptide = False
+                if current_pid and profile is not None and current_role is not None:
+                    role_key = {
+                        "targets": "target_uniprot_ids",
+                        "enzymes": "enzyme_uniprot_ids",
+                        "transporters": "transporter_uniprot_ids",
+                        "carriers": "carrier_uniprot_ids",
+                    }[current_role]
+                    profile[role_key].add(current_pid)
+                current_pid = None
+                elem.clear()
+
+            elif (event == "end" and tag == f"{NS}amino-acid-sequence"
+                  and in_polypeptide and current_role == "targets" and profile is not None):
+                if elem.text:
+                    lines = elem.text.strip().splitlines()
+                    body = "".join(lines[1:]) if lines and lines[0].startswith(">") else "".join(lines)
+                    if body.strip():
+                        profile["target_fasta_sequences"].add(body.strip())
+
+            elif (event == "end" and tag == f"{NS}pfam"
+                  and in_polypeptide and current_role == "targets" and profile is not None):
+                ident = elem.find(f"{NS}identifier")
+                if ident is not None and ident.text:
+                    profile["target_pfam_domains"].add(ident.text.strip())
+                elem.clear()
+
+            elif (event == "end" and tag == f"{NS}go-classifier"
+                  and in_polypeptide and current_role == "targets" and profile is not None):
+                category = elem.find(f"{NS}category")
+                description = elem.find(f"{NS}description")
+                aspect = _GO_CATEGORY_TO_ASPECT.get((category.text or "").strip().lower()) if category is not None else None
+                if aspect and description is not None and description.text:
+                    profile[f"target_go_{aspect}"].add(description.text.strip())
+                elem.clear()
+
+            elif event == "end" and tag == f"{NS}drug":
+                if drug_depth == 1:
+                    if current_id is not None and profile is not None and (wanted is None or current_id in wanted):
+                        results[current_id] = {k: sorted(v) if isinstance(v, set) else v for k, v in profile.items()}
+                    profile = None
+                    current_id = None
+                    current_role = None
+                    in_pathways_block = False
+                    root.clear()
+                drug_depth -= 1
+
+    return results
+
+
+# ─────────────────────────────────────────────────────────────
 # Pathway Mapper
 # ─────────────────────────────────────────────────────────────
- 
+
 class PathwayMapper:
     """
     Central index for pathway ↔ protein relationships.
