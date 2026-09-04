@@ -3,11 +3,20 @@
 
 # Large data files (too big for GitHub)
 data/raw/drugbank_all_full_database_V5.1.14.xml.zip
+data/raw/drugbank_full_database_V5.1.14.zip
 data/sample/*.csv
 data/raw/*.csv
 data/sample/*.parquet
 data/atc_code_output/rds_cache/
+
+# Large generated notebook outputs (over GitHub's 100MB file limit)
+notebooks/h1_biological_overlap/adverse_biological_overlap_df.parquet
+notebooks/h1_biological_overlap/non_interacting_biological_overlap_df.parquet
+notebooks/h1_biological_overlap/adverse_biological_overlap_extended.parquet
+notebooks/h3_structural_similarity/models/**/*.joblib
+
 # Secret credentials
+notebooks_test/.env
 
 # All CSV files in results folder
 results/*.csv
